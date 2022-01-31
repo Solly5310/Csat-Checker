@@ -31,6 +31,7 @@ form.addEventListener("submit", (event) => {
 function checkTickets(date) {
   var client = ZAFClient.init();
   var compareDate = new Date(date);
+  console.log(compareDate);
   //initial scan of first 1000 available tickets (can revise)
   client.request("/api/v2/search.json?query=type:ticket").then(
     function (tickets) {
