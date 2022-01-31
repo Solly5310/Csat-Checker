@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "browserify": "^17.0.0",
+    "https": "^1.0.0",
+    "request": "^2.88.2",
+    "sentiment": "^5.0.2"
+  }
+}

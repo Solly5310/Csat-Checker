@@ -1,0 +1,17 @@
+{
+  "name": "csat_checker",
+  "author": {
+    "name": "solomon rachamim",
+    "email": "solomon.rachamim@gmail.com",
+    "url": ""
+  },
+  "defaultLocale": "en",
+  "private": true,
+  "location": {
+    "support": {
+      "nav_bar": "assets/iframe.html"
+    }
+  },
+  "version": "1.0",
+  "frameworkVersion": "2.0"
+}
