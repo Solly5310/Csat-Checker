@@ -1,14 +1,13 @@
-# App name
+# CSAT CHECKER
 
-[brief description of the app]
+This app provides a search bar for tickets, automatically checking customer sentiment in each of them.
 
 ### The following information is displayed:
 
-* info1
-* info2
-* info3
+- Ticket Subject
+- Ticket Sentiment Score
+- Ticket Link
 
-Please submit bug reports to [Insert Link](). Pull requests are welcome.
+### Notes
 
-### Screenshot(s):
-[put your screenshots down here.]
+- Current app is a very minimal prototype further progress to be made in the future (shown in issues section)
