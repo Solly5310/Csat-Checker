@@ -12,29 +12,55 @@
       href="https://cdn.jsdelivr.net/combine/npm/@zendeskgarden/css-bedrock@7.0.21,npm/@zendeskgarden/css-utilities@4.3.0"
     />
     <link href="main.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
   </head>
   <body>
-    <var id="test"></var>
+    <div id="top"></div>
     <form id="form">
       <label for="start">Start date:</label>
       <input
         type="date"
         id="start"
         name="trip-start"
-        value="2018-07-22"
         min="2018-01-01"
         max="2022-01-28"
+        required
+      />
+      <label for="end">End date:</label>
+      <input
+        type="date"
+        id="datefield"
+        name="trip-end"
+        min="2018-01-01"
+        max="2022-01-28"
+        required
       />
       <button type="submit">Submit form</button>
     </form>
     <p id="log"></p>
-    <button id="hide">Hide</button>
-    <button id="show">Show</button>
+    <var id="test"></var>
 
-    <var id="list"></var>
+    <div id="list"></div>
+
+    <footer class="footer">
+      <p>
+        Bugs/Suggestions, please report -
+        <a
+          href="https://github.com/Solly5310/Csat-Checker/issues"
+          ,
+          target="_blank"
+          >here</a
+        >
+      </p>
+    </footer>
 
     <script src="https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
     <script src="bundle.js"></script>
   </body>
 </html>
+
+<!--
+<button id="hide">Hide</button>
+    <button id="show">Show</button>
+-->
