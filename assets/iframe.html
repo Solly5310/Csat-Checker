@@ -2,21 +2,21 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <!--   See Using Zendesk Garden:
-    https://developer.zendesk.com/apps/docs/developer-guide/setup#using-zendesk-garden
-    https://garden.zendesk.com/css-components/bedrock/
-    https://garden.zendesk.com/css-components/utilities/typography/
-   -->
+    <!-- Latest compiled and minified CSS -->
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/combine/npm/@zendeskgarden/css-bedrock@7.0.21,npm/@zendeskgarden/css-utilities@4.3.0"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300&display=swap"
+      rel="stylesheet"
     />
     <link href="main.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
   </head>
   <body>
     <div id="top"></div>
-    <form id="form">
+    <form class="container-fluid" id="form">
       <label for="start">Start date:</label>
       <input
         type="date"
@@ -37,10 +37,9 @@
       />
       <button type="submit">Submit form</button>
     </form>
-    <p id="log"></p>
     <var id="test"></var>
 
-    <div id="list"></div>
+    <div class="container-fluid" id="list"></div>
 
     <footer class="footer">
       <p>
@@ -53,7 +52,11 @@
         >
       </p>
     </footer>
-
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+      crossorigin="anonymous"
+    ></script>
     <script src="https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
     <script src="bundle.js"></script>

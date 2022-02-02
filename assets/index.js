@@ -21,66 +21,57 @@ $(function () {
   // The code here initialises the zendesk session with the app
   // There are many functions which can be applied to the client variable
   var client = ZAFClient.init();
-  client.invoke("resize", { width: "100%", height: "300px" });
+
   startPrompt();
 });
 
 // First function that will initially prompt user
 function startPrompt() {
-  $("#top").append(
-    "<h1 class='u-semibold u-fs-xl' >Welcome to the CSAT Checker</h1>"
-  );
+  $("#top").append("<h1 class='u-semibold u-fs-xl' >CSAT Checker</h1>");
 }
-
-//event listener for the form submit
-const form = document.getElementById("form");
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  var dateStart = document.getElementById("start").value;
-  var dateEnd = document.getElementById("datefield").value;
-  $("#test").append(
-    `<p>The date range chosen was ${dateStart} to ${dateEnd}</p>`
-  );
-  checkTickets(dateStart, dateEnd);
-});
 
 function furtherTicketAnalysis(event) {
   var client = ZAFClient.init();
 
   var buttonId = event.target.id;
+
   var tID = ticket_analysis[buttonId].ticketID;
 
-  client.request(`/api/v2/tickets/${tID}/comments`).then(function (response) {
-    var responseScore = 0;
-    var z = 1;
-    var dateResponses = [];
-    var scoreList = [];
-    for (x in response.comments) {
-      var singleResponseScore = ticketAnalysis(response.comments[x].body);
-      responseDate = new Date(response.comments[x].created_at);
-      responseTime = responseDate.toLocaleTimeString();
-      responseDate = responseDate.toLocaleDateString();
-      dateResponses.push("R" + z + " " + responseDate);
+  client
+    .request(`/api/v2/tickets/${tID}/comments`)
+    .then(function (response) {
+      var responseScore = 0;
+      var z = 1;
+      var dateResponses = [];
+      var scoreList = [];
+      for (x in response.comments) {
+        var singleResponseScore = ticketAnalysis(response.comments[x].body);
+        responseDate = new Date(response.comments[x].created_at);
+        responseTime = responseDate.toLocaleTimeString();
+        responseDate = responseDate.toLocaleDateString();
+        dateResponses.push("R" + z + " " + responseDate);
 
-      scoreList.push(singleResponseScore.score);
-      z += 1;
-      responseScore += singleResponseScore.score;
-    }
-    $(`#t${buttonId}`).append(
-      `<div class="chart-container" style="position: relative; height:20vh; width:30vw"> <canvas id="chart${buttonId}" height="0px" width="opx"></canvas></div>`
-    );
-
-    displayGraph(dateResponses, scoreList, buttonId);
-    $(`#t${buttonId}`).append(`<p>Response Log</p>`);
-    z = 1;
-    for (x in response.comments) {
+        scoreList.push(singleResponseScore.score);
+        z += 1;
+        responseScore += singleResponseScore.score;
+      }
       $(`#t${buttonId}`).append(
-        `<p>Response ${z++}: ${response.comments[x].body}</p>`
+        `<div class="chart-container" style="position: relative; height:20vh; width:30vw"> <canvas id="chart${buttonId}" height="0px" width="opx"></canvas></div>`
       );
-    }
-    $(`#t${buttonId}`).append(`<p>Total Score: ${responseScore}</p>`);
-  }),
+
+      displayGraph(dateResponses, scoreList, buttonId);
+      $(`#t${buttonId}`).append(`<p>Response Log</p>`);
+      z = 1;
+      for (x in response.comments) {
+        $(`#t${buttonId}`).append(
+          `<p>Response ${z++}: ${response.comments[x].body}</p>`
+        );
+      }
+      $(`#t${buttonId}`).append(`<p>Total Score: ${responseScore}</p>`);
+    })
+    .then(function (response) {
+      $(`#${buttonId}`).remove();
+    }),
     function (response) {
       console.error(response.responseText);
     };
@@ -94,11 +85,15 @@ function checkTickets(dateS, dateE) {
     .request(
       `/api/v2/search.json?query=type:ticket  created>${dateS}  created<${dateE}`
     )
+    .then(function (response) {
+      $(".div").empty();
+      $(".div").remove();
+      $("#test").empty();
+      ticket_analysis = [];
+      return response;
+    })
     .then(
       function (tickets) {
-        var parent = document.getElementById("list");
-        console.log("yes yes");
-        console.log(parent);
         var result = tickets.results;
         for (x in result) {
           let ticket_data = {
@@ -133,53 +128,12 @@ function checkTickets(dateS, dateE) {
           const element = document.getElementById(`${x}`);
           element.addEventListener("click", furtherTicketAnalysis);
         }
-        var parent = document.getElementById("list");
-        console.log("yes yes");
-        console.log(parent);
       },
       function (response) {
         console.error(response.responseText);
       }
     );
 }
-
-const obtainCustomerInfo = (user) => {
-  var client = ZAFClient.init();
-  //resolve will mark the functino as successful
-  return new Promise((resolve, reject) => {
-    client.request(`/api/v2/users/${user}.json`).then((data) => {
-      resolve(data);
-    });
-  });
-};
-
-//Show hide demonstration
-$(document).ready(function () {
-  $("#form").submit(function () {
-    $("#list").clear();
-  });
-  $("#form").submit(function () {
-    $("#list").clear();
-  });
-});
-//remove duplicates function
-function removeDuplicates(data) {
-  return [...new Set(data)];
-}
-
-/*
-  client.request({
-    url: "/api/v2/tickets.json",
-    type: "POST",
-    contentType: "application/json",
-    data: JSON.stringify({
-      ticket: {
-        subject: "Test ticket #3000",
-        comment: { body: "This is a test ticket" },
-      },
-    }),
-  });
-  */
 
 function ticketAnalysis(ticketDescription) {
   var sentiment = require("../node_modules/sentiment");
@@ -219,3 +173,51 @@ function displayGraph(responses, sc, id) {
 
   const myChart = new Chart(document.getElementById(`chart${id}`), config);
 }
+
+//event listener for the form submit
+const form = document.getElementById("form");
+form.addEventListener("submit", (event) => {
+  var parentNode = document.getElementById("list");
+  Promise.resolve().then((_) => (parentNode.innerHTML = ""));
+  console.log(parentNode);
+  event.preventDefault();
+  var dateStart = document.getElementById("start").value;
+  var dateEnd = document.getElementById("datefield").value;
+  $("#test").append(
+    `<p>The date range chosen was ${dateStart} to ${dateEnd}</p>`
+  );
+  checkTickets(dateStart, dateEnd);
+});
+
+// Unused --------------------------------------------
+
+//remove duplicates function
+function removeDuplicates(data) {
+  return [...new Set(data)];
+}
+
+/*
+const obtainCustomerInfo = (user) => {
+  var client = ZAFClient.init();
+  //resolve will mark the functino as successful
+  return new Promise((resolve, reject) => {
+    client.request(`/api/v2/users/${user}.json`).then((data) => {
+      resolve(data);
+    });
+  });
+};
+*/
+
+/*
+  client.request({
+    url: "/api/v2/tickets.json",
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({
+      ticket: {
+        subject: "Test ticket #3000",
+        comment: { body: "This is a test ticket" },
+      },
+    }),
+  });
+  */
