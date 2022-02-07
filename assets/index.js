@@ -17,7 +17,7 @@ $(function () {
 
   today = yyyy + "-" + mm + "-" + dd;
   document.getElementById("datefield").setAttribute("max", today);
-
+  document.getElementById("start").setAttribute("max", today);
   // The code here initialises the zendesk session with the app
   // There are many functions which can be applied to the client variable
   var client = ZAFClient.init();
@@ -56,18 +56,23 @@ function furtherTicketAnalysis(event) {
         responseScore += singleResponseScore.score;
       }
       $(`#t${buttonId}`).append(
-        `<div class="chart-container" style="position: relative; height:20vh; width:30vw"> <canvas id="chart${buttonId}" height="0px" width="opx"></canvas></div>`
+        `<div class="chart-container"> <canvas id="chart${buttonId}" height="0px" width="opx"></canvas></div>`
       );
 
       displayGraph(dateResponses, scoreList, buttonId);
-      $(`#t${buttonId}`).append(`<p>Response Log</p>`);
+      $(`#t${buttonId}`).append(
+        `<div class="responseDiv" id="r${buttonId}"></div>`
+      );
+      $(`#r${buttonId}`).append(`<h4>Response Log:</h4>`);
       z = 1;
       for (x in response.comments) {
-        $(`#t${buttonId}`).append(
-          `<p>Response ${z++}: ${response.comments[x].body}</p>`
+        $(`#r${buttonId}`).append(
+          `<p class="responseP">Response ${z++}: ${
+            response.comments[x].body
+          }</p>`
         );
       }
-      $(`#t${buttonId}`).append(`<p>Total Score: ${responseScore}</p>`);
+      $(`#r${buttonId}`).append(`<p>Total Score: ${responseScore}</p>`);
     })
     .then(function (response) {
       $(`#${buttonId}`).remove();
@@ -79,11 +84,11 @@ function furtherTicketAnalysis(event) {
 
 function checkTickets(dateS, dateE) {
   var client = ZAFClient.init();
-  console.log(dateS + " " + dateE);
+  console.log(typeof dateE);
   //initial scan of first 1000 available tickets (can revise)
   client
     .request(
-      `/api/v2/search.json?query=type:ticket  created>${dateS}  created<${dateE}`
+      `/api/v2/search.json?query=type:ticket  created>=${dateS}  created<=${dateE}`
     )
     .then(function (response) {
       $(".div").empty();
@@ -116,14 +121,12 @@ function checkTickets(dateS, dateE) {
           //if (ticket_analysis[x].ticketScore < 0) {
 
           $("#list").append(
-            `<div class="div" id="t${x}"><p>Ticket Subject: ${ticket_analysis[x].subject}\tTicket ID:${ticket_analysis[x].ticketID}\tSubmitter ID: ${ticket_analysis[x].submitterID}\tTicket Score: ${ticket_analysis[x].ticketScore}</p></div>`
+            `<div class="ticketDiv" id="t${x}"><table class="container-fluid div" ><tr><th>Ticket Subject:</th><th>Ticket ID:</th><th>Submitter ID:</th><th>Ticket Score:</th></tr> <tr> <td> ${ticket_analysis[x].subject}</td><td>${ticket_analysis[x].ticketID}</td><td>${ticket_analysis[x].submitterID}</td><td>${ticket_analysis[x].ticketScore}</td></tr></table></div>`
           );
           $(`#t${x}`).append(
-            `<a href="${ticket_analysis[x].url}" target="_blank"> <button type="button">Ticket</button></a>`
+            `<div ><a href="${ticket_analysis[x].url}" target="_blank"> <button class="tableButtons" type="button">Ticket</button></a><button class="tableButtons" id=${x} value=${x} type="button">Analysis</button></div>`
           );
-          $(`#t${x}`).append(
-            `<button id=${x} value=${x} type="button">Further Analysis</button>`
-          );
+          $(`#t${x}`).append(``);
 
           const element = document.getElementById(`${x}`);
           element.addEventListener("click", furtherTicketAnalysis);
@@ -158,17 +161,45 @@ function displayGraph(responses, sc, id) {
     datasets: [
       {
         label: "Sentiment Score",
-        backgroundColor: "rgb(255, 99, 132)",
-        borderColor: "rgb(255, 99, 132)",
+        backgroundColor: "red",
+        borderColor: "red",
         data: sc,
       },
     ],
   };
 
   const config = {
+    options: {
+      plugins: {
+        legend: {
+          position: "top",
+          labels: {
+            fontColor: "white",
+            color: "white",
+          },
+        },
+      },
+      scales: {
+        y: {
+          grid: {
+            color: "white",
+          },
+          ticks: {
+            color: "white",
+          },
+        },
+        x: {
+          grid: {
+            color: "white",
+          },
+          ticks: {
+            color: "white",
+          },
+        },
+      },
+    },
     type: "line",
     data: data,
-    options: {},
   };
 
   const myChart = new Chart(document.getElementById(`chart${id}`), config);
@@ -179,10 +210,15 @@ const form = document.getElementById("form");
 form.addEventListener("submit", (event) => {
   var parentNode = document.getElementById("list");
   Promise.resolve().then((_) => (parentNode.innerHTML = ""));
-  console.log(parentNode);
+
   event.preventDefault();
   var dateStart = document.getElementById("start").value;
   var dateEnd = document.getElementById("datefield").value;
+  console.log(dateEnd);
+  var dateEnd = new Date(dateEnd);
+  //
+  dateEnd.setDate(dateEnd.getDate() + 1);
+  dateEnd = dateEnd.toISOString().split("T")[0];
   $("#test").append(
     `<p>The date range chosen was ${dateStart} to ${dateEnd}</p>`
   );

@@ -1,7 +1,161 @@
 * {
-  background-color: #242582;
+  background-color: #144a75;
   color: white;
+  z-index: 1;
 }
 body {
+  font-family: "Montserrat", sans-serif;
+}
+
+#top,
+footer {
+  margin: 10px;
+}
+
+button {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 10px 16px;
+  background-color: white;
+  width: 79px;
+  height: 40px;
+  left: 70px;
+  top: 53px;
+  color: #144a75;
+  /* Blue / Blue-600 */
+
+  border: 1px solid #144a75;
+  box-sizing: border-box;
+  border-radius: 4px;
+}
+
+button:hover {
+  background-color: #ffd424;
+}
+
+button:active {
+  transform: scale(0.98);
+  /* Scaling button to 0.98 to its original size */
+  box-shadow: 3px 2px 22px 1px rgba(0, 0, 0, 0.24);
+  /* Lowering the shadow */
+}
+
+/* Auto layout */
+input {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 10px 12px;
+
+  position: static;
+  width: 260px;
+  height: 40px;
+  left: calc(50% - 260px / 2);
+  top: 0px;
+  color: #144a75;
+  /* Grey/White */
+
+  background: #ffffff;
+  /* Blue / Blue-600 */
+
+  border: 1px solid #1f73b7;
+  box-sizing: border-box;
+  border-radius: 4px;
+
+  /* Inside auto layout */
+
+  flex: none;
+  order: 0;
+  align-self: stretch;
+  flex-grow: 0;
+  margin: 10px 0px;
+}
+
+table {
+  padding: 0px;
+  margin: 10px;
+  column-width: 400px;
+  border-spacing: 0px;
+  border: 3px white solid;
+  min-width: 500px;
+  max-width: 500px;
+  border-radius: 4px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+td,
+th {
+  background-color: #0f3554;
+}
+th {
+  text-align: center;
+}
+
+td {
+  border-top: 1px solid white;
+  text-align: center;
+  max-width: 25%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tableButtons {
+  display: inline-block;
+  margin: 10px;
+}
+
+form {
+  margin: 10px;
+}
+
+canvas {
+  background-color: #0f3554;
+  border: 3px white solid;
+  border-radius: 4px;
+  margin: 10px;
+}
+
+.chart-container {
+  position: relative;
+  height: 20vh;
+  width: 25vw;
+}
+
+.responseDiv {
+  margin-left: 10px;
+  margin-bottom: 40px;
+  background-color: #0f3554;
+  border: 3px white solid;
+  border-radius: 4px;
+  z-index: 3;
+  max-width: 500px;
+}
+
+.responseDiv p {
+  background-color: #0f3554;
+  padding-bottom: 20px;
+  margin-bottom: 0px;
+}
+
+.responseDiv h4 {
+  background-color: #0f3554;
+  text-align: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid white;
+}
+
+.responseP {
+  border-bottom: 1px solid;
+  margin-bottom: 10px;
+}
+
+.ticketDiv {
+  border-bottom: 1px solid white;
+}
+
+input[type="date"] {
   font-family: "Montserrat", sans-serif;
 }
