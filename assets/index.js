@@ -4,7 +4,10 @@ var numberPerPage;
 var currentPage;
 var numberOfItems;
 var numberOfPages;
-
+var dateStart;
+var dateEnd;
+var sortCounter = 0;
+var agent;
 //We need pagination to occur now
 
 $(function () {
@@ -33,29 +36,45 @@ $(function () {
 //First step in form submission
 const form = document.getElementById("form");
 form.addEventListener("submit", (event) => {
+  $(`#sortButton`).remove();
   var parentNode = document.getElementsByTagName("content");
   Promise.resolve().then((_) => (parentNode.innerHTML = ""));
-
+  $("form").append(
+    `<button class="formButtons" id="sortButton" type="button">Sort</button>`
+  );
+  addSortButtonListener();
   event.preventDefault();
-  var dateStart = document.getElementById("start").value;
-  var dateEnd = document.getElementById("datefield").value;
-  console.log(dateEnd);
-  var dateEnd = new Date(dateEnd);
+  dateStart = document.getElementById("start").value;
+  dateEnd = document.getElementById("datefield").value;
+  agent = document.getElementById("agentSelect").value;
+
+  console.log(agent);
+
+  dateEnd = new Date(dateEnd);
   //
   dateEnd.setDate(dateEnd.getDate() + 1);
   dateEnd = dateEnd.toISOString().split("T")[0];
-
-  checkTickets(dateStart, dateEnd);
+  checkTickets(dateStart, dateEnd, sortCounter);
 });
 
-function checkTickets(dateS, dateE) {
+function addSortButtonListener() {
+  const sortButton = document.getElementById("sortButton");
+  sortButton.addEventListener("click", (event) => {
+    sortCounter++;
+    checkTickets(dateStart, dateEnd, sortCounter);
+  });
+}
+function checkTickets(dateS, dateE, sort) {
   var client = ZAFClient.init();
   console.log(typeof dateE);
+  if (agent) {
+    var apiLine = `/api/v2/search.json?query=type:ticket  created>=${dateS}  created<=${dateE} assignee:${agent}`;
+  } else {
+    var apiLine = `/api/v2/search.json?query=type:ticket  created>=${dateS}  created<=${dateE}`;
+  }
   //initial scan of first 1000 available tickets (can revise)
   client
-    .request(
-      `/api/v2/search.json?query=type:ticket  created>=${dateS}  created<=${dateE}`
-    )
+    .request(apiLine)
     .then(function (response) {
       $(".div").empty();
       $(".div").remove();
@@ -91,16 +110,23 @@ function checkTickets(dateS, dateE) {
         };
         ticket_analysis.push(ticket_data);
       }
-      ticket_analysis.sort((a, b) => {
-        return a.ticketScore > b.ticketScore ? 1 : -1;
-      });
+
+      if (sort % 2 === 0) {
+        ticket_analysis.sort((a, b) => {
+          return a.ticketScore > b.ticketScore ? 1 : -1;
+        });
+      } else if (sort % 2 === 1) {
+        ticket_analysis.sort((a, b) => {
+          return a.ticketScore < b.ticketScore ? 1 : -1;
+        });
+      }
       //lets create a new list
-      ticket_list = [];
+      else ticket_list = [];
       for (x in ticket_analysis) {
         //if (ticket_analysis[x].ticketScore < 0) {
         // we need to get this into an array to then display as needed
         var ticket_details = {
-          list: `<div class="ticketDiv" id="c${x}"><table class="container-fluid div" ><tr><th>Ticket Subject:</th><th>Ticket ID:</th><th>Submitter ID:</th><th>Ticket Score:</th></tr> <tr> <td> ${ticket_analysis[x].subject}</td><td>${ticket_analysis[x].ticketID}</td><td>${ticket_analysis[x].submitterID}</td><td>${ticket_analysis[x].ticketScore}</td></tr></table></div>`,
+          list: `<div class="ticketDiv" id="c${x}"><table class="container-fluid div" ><tr><th>Ticket Subject:</th><th>Ticket ID:</th><th>Submitter ID:</th><th>Initial Score:</th></tr> <tr> <td> ${ticket_analysis[x].subject}</td><td>${ticket_analysis[x].ticketID}</td><td>${ticket_analysis[x].submitterID}</td><td>${ticket_analysis[x].ticketScore}</td></tr></table></div>`,
           t: `<div ><a href="${ticket_analysis[x].url}" target="_blank"> <button class="tableButtons" type="button">Ticket</button></a><button class="tableButtons d${x}" id="c${x}" value=${x} type="button">Analysis</button></div>`,
         };
         ticket_list.push(ticket_details);
