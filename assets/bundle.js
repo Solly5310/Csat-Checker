@@ -1,5 +1,12 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 var ticket_analysis = [];
+var ticket_list;
+var numberPerPage;
+var currentPage;
+var numberOfItems;
+var numberOfPages;
+
+//We need pagination to occur now
 
 $(function () {
   //setting max paremeter to todays date
@@ -21,21 +28,100 @@ $(function () {
   document.getElementById("start").setAttribute("max", today);
   // The code here initialises the zendesk session with the app
   // There are many functions which can be applied to the client variable
-  var client = ZAFClient.init();
-
-  startPrompt();
 });
 
-// First function that will initially prompt user
-function startPrompt() {
-  $("#top").append("<h1 class='u-semibold u-fs-xl' >CSAT Checker</h1>");
+//Event listener for the form submit
+//First step in form submission
+const form = document.getElementById("form");
+form.addEventListener("submit", (event) => {
+  var parentNode = document.getElementsByTagName("content");
+  Promise.resolve().then((_) => (parentNode.innerHTML = ""));
+
+  event.preventDefault();
+  var dateStart = document.getElementById("start").value;
+  var dateEnd = document.getElementById("datefield").value;
+  console.log(dateEnd);
+  var dateEnd = new Date(dateEnd);
+  //
+  dateEnd.setDate(dateEnd.getDate() + 1);
+  dateEnd = dateEnd.toISOString().split("T")[0];
+
+  checkTickets(dateStart, dateEnd);
+});
+
+function checkTickets(dateS, dateE) {
+  var client = ZAFClient.init();
+  console.log(typeof dateE);
+  //initial scan of first 1000 available tickets (can revise)
+  client
+    .request(
+      `/api/v2/search.json?query=type:ticket  created>=${dateS}  created<=${dateE}`
+    )
+    .then(function (response) {
+      $(".div").empty();
+      $(".div").remove();
+
+      ticket_analysis = [];
+      ticket_list = [];
+      return response;
+    })
+    .then(function (tickets) {
+      var result = tickets.results;
+
+      console.log("here is the result");
+      console.log(result);
+
+      numberOfItems = result.length;
+      numberPerPage = 5;
+      currentPage = 1;
+
+      // Number of pages
+      numberOfPages = Math.ceil(numberOfItems / numberPerPage);
+      console.log(numberOfPages);
+      for (x in result) {
+        let ticket_data = {
+          subject: result[x].subject,
+          description: result[x].description,
+          ticketID: result[x].id,
+          submitterID: result[x].submitter_id,
+          //apply ticket analysis function, remember that you are just taking the general ticket score for now
+          ticketScore:
+            ticketAnalysis(result[x].description).score +
+            ticketAnalysis(result[x].subject).score,
+          url: returnTicketUrl(result[x].url, result[x].id),
+        };
+        ticket_analysis.push(ticket_data);
+      }
+      ticket_analysis.sort((a, b) => {
+        return a.ticketScore > b.ticketScore ? 1 : -1;
+      });
+      //lets create a new list
+      ticket_list = [];
+      for (x in ticket_analysis) {
+        //if (ticket_analysis[x].ticketScore < 0) {
+        // we need to get this into an array to then display as needed
+        var ticket_details = {
+          list: `<div class="ticketDiv" id="c${x}"><table class="container-fluid div" ><tr><th>Ticket Subject:</th><th>Ticket ID:</th><th>Submitter ID:</th><th>Ticket Score:</th></tr> <tr> <td> ${ticket_analysis[x].subject}</td><td>${ticket_analysis[x].ticketID}</td><td>${ticket_analysis[x].submitterID}</td><td>${ticket_analysis[x].ticketScore}</td></tr></table></div>`,
+          t: `<div ><a href="${ticket_analysis[x].url}" target="_blank"> <button class="tableButtons" type="button">Ticket</button></a><button class="tableButtons d${x}" id="c${x}" value=${x} type="button">Analysis</button></div>`,
+        };
+        ticket_list.push(ticket_details);
+      }
+    })
+    .then(function (response) {
+      buildPage(currentPage, numberPerPage, ticket_list);
+      buildPagination(1);
+    }),
+    function (response) {
+      console.error(response.responseText);
+    };
 }
 
 function furtherTicketAnalysis(event) {
   var client = ZAFClient.init();
-
+  console.log(event);
   var buttonId = event.target.id;
-
+  var buttonId = buttonId.replace(/[^\d.-]/g, "");
+  console.log(buttonId);
   var tID = ticket_analysis[buttonId].ticketID;
 
   client
@@ -56,24 +142,29 @@ function furtherTicketAnalysis(event) {
         z += 1;
         responseScore += singleResponseScore.score;
       }
-      $(`#t${buttonId}`).append(
-        `<div class="chart-container"> <canvas id="chart${buttonId}" height="0px" width="opx"></canvas></div>`
+      $(`.d${buttonId}`).remove();
+      //second one for pagination implementation
+      $(`#c${buttonId}`).append(
+        `<div class="chart-container"> <canvas id="chartl${buttonId}" height="0px" width="opx"></canvas></div>`
+      );
+      displayGraph(dateResponses, scoreList, buttonId);
+
+      //second one for pagination implementation
+      $(`#c${buttonId}`).append(
+        `<div class="responseDiv" id="rp${buttonId}"></div>`
       );
 
-      displayGraph(dateResponses, scoreList, buttonId);
-      $(`#t${buttonId}`).append(
-        `<div class="responseDiv" id="r${buttonId}"></div>`
-      );
-      $(`#r${buttonId}`).append(`<h4>Response Log:</h4>`);
+      //second one for pagination
+      $(`#rp${buttonId}`).append(`<h4>Response:</h4>`);
       z = 1;
       for (x in response.comments) {
-        $(`#r${buttonId}`).append(
-          `<p class="responseP">Response ${z++}: ${
-            response.comments[x].body
-          }</p>`
+        $(`#rp${buttonId}`).append(
+          `<p class="responseP">Response ${z}: ${response.comments[x].body}</p>`
         );
+        z++;
       }
-      $(`#r${buttonId}`).append(`<p>Total Score: ${responseScore}</p>`);
+
+      $(`#rp${buttonId}`).append(`<p>Total Score: ${responseScore}</p>`);
     })
     .then(function (response) {
       $(`#${buttonId}`).remove();
@@ -83,61 +174,42 @@ function furtherTicketAnalysis(event) {
     };
 }
 
-function checkTickets(dateS, dateE) {
-  var client = ZAFClient.init();
-  console.log(typeof dateE);
-  //initial scan of first 1000 available tickets (can revise)
-  client
-    .request(
-      `/api/v2/search.json?query=type:ticket  created>=${dateS}  created<=${dateE}`
-    )
-    .then(function (response) {
-      $(".div").empty();
-      $(".div").remove();
-      $("#test").empty();
-      ticket_analysis = [];
-      return response;
-    })
-    .then(
-      function (tickets) {
-        var result = tickets.results;
-        for (x in result) {
-          let ticket_data = {
-            subject: result[x].subject,
-            description: result[x].description,
-            ticketID: result[x].id,
-            submitterID: result[x].submitter_id,
-            //apply ticket analysis function, remember that you are just taking the general ticket score for now
-            ticketScore:
-              ticketAnalysis(result[x].description).score +
-              ticketAnalysis(result[x].subject).score,
-            url: returnTicketUrl(result[x].url, result[x].id),
-          };
-          ticket_analysis.push(ticket_data);
-        }
-        ticket_analysis.sort((a, b) => {
-          return a.ticketScore > b.ticketScore ? 1 : -1;
-        });
-        for (x in ticket_analysis) {
-          //if (ticket_analysis[x].ticketScore < 0) {
+function buildPage(currPage, numberPerPage, listArray) {
+  let trimStart = (currPage - 1) * numberPerPage;
+  let trimEnd = trimStart + numberPerPage;
+  listArray = listArray.slice(trimStart, trimEnd);
 
-          $("#list").append(
-            `<div class="ticketDiv" id="t${x}"><table class="container-fluid div" ><tr><th>Ticket Subject:</th><th>Ticket ID:</th><th>Submitter ID:</th><th>Ticket Score:</th></tr> <tr> <td> ${ticket_analysis[x].subject}</td><td>${ticket_analysis[x].ticketID}</td><td>${ticket_analysis[x].submitterID}</td><td>${ticket_analysis[x].ticketScore}</td></tr></table></div>`
-          );
-          $(`#t${x}`).append(
-            `<div ><a href="${ticket_analysis[x].url}" target="_blank"> <button class="tableButtons" type="button">Ticket</button></a><button class="tableButtons" id=${x} value=${x} type="button">Analysis</button></div>`
-          );
-          $(`#t${x}`).append(``);
-
-          const element = document.getElementById(`${x}`);
-          element.addEventListener("click", furtherTicketAnalysis);
-        }
-      },
-      function (response) {
-        console.error(response.responseText);
-      }
-    );
+  $(".content").empty();
+  for (x in listArray) {
+    console.log(listArray);
+    console.log(x);
+    $(".content").append(listArray[x].list);
+    $(`#c${trimStart}`).append(listArray[x].t);
+    const element = document.getElementsByClassName(`d${trimStart}`);
+    console.log(element);
+    element[0].addEventListener("click", furtherTicketAnalysis);
+    trimStart++;
+  }
 }
+
+function buildPagination(clickedPage) {
+  $(".paginator").empty();
+
+  for (let i = 0; i < numberOfPages; i++) {
+    $(".paginator").append(
+      `<button class="btn btn-primary" value="${i + 1}">${i + 1}</button>`
+    );
+  }
+}
+
+$(".paginator").on("click", "button", function () {
+  var clickedPage = parseInt($(this).val());
+  console.log(this);
+  console.log(123);
+  buildPagination(clickedPage);
+  console.log(`Page clicked on ${clickedPage}`);
+  buildPage(clickedPage, numberPerPage, ticket_list);
+});
 
 function ticketAnalysis(ticketDescription) {
   var sentiment = require("../node_modules/sentiment");
@@ -203,61 +275,8 @@ function displayGraph(responses, sc, id) {
     data: data,
   };
 
-  const myChart = new Chart(document.getElementById(`chart${id}`), config);
+  const myChartl = new Chart(document.getElementById(`chartl${id}`), config);
 }
-
-//event listener for the form submit
-const form = document.getElementById("form");
-form.addEventListener("submit", (event) => {
-  var parentNode = document.getElementById("list");
-  Promise.resolve().then((_) => (parentNode.innerHTML = ""));
-
-  event.preventDefault();
-  var dateStart = document.getElementById("start").value;
-  var dateEnd = document.getElementById("datefield").value;
-  console.log(dateEnd);
-  var dateEnd = new Date(dateEnd);
-  //
-  dateEnd.setDate(dateEnd.getDate() + 1);
-  dateEnd = dateEnd.toISOString().split("T")[0];
-  $("#test").append(
-    `<p>The date range chosen was ${dateStart} to ${dateEnd}</p>`
-  );
-  checkTickets(dateStart, dateEnd);
-});
-
-// Unused --------------------------------------------
-
-//remove duplicates function
-function removeDuplicates(data) {
-  return [...new Set(data)];
-}
-
-/*
-const obtainCustomerInfo = (user) => {
-  var client = ZAFClient.init();
-  //resolve will mark the functino as successful
-  return new Promise((resolve, reject) => {
-    client.request(`/api/v2/users/${user}.json`).then((data) => {
-      resolve(data);
-    });
-  });
-};
-*/
-
-/*
-  client.request({
-    url: "/api/v2/tickets.json",
-    type: "POST",
-    contentType: "application/json",
-    data: JSON.stringify({
-      ticket: {
-        subject: "Test ticket #3000",
-        comment: { body: "This is a test ticket" },
-      },
-    }),
-  });
-  */
 
 },{"../node_modules/sentiment":7}],2:[function(require,module,exports){
 module.exports={
