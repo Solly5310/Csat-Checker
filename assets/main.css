@@ -104,7 +104,7 @@ td {
 
 .tableButtons {
   display: inline-block;
-  margin: 10px;
+  margin: 10px 0px 10px 10px;
 }
 
 form {
@@ -158,4 +158,15 @@ canvas {
 
 input[type="date"] {
   font-family: "Montserrat", sans-serif;
+}
+
+.paginator {
+  margin-top: 1em;
+  margin-left: 10px;
+  display: flex;
+  justify-content: left;
+}
+
+.btn-primary {
+  margin-right: 10px;
 }
